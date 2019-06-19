@@ -1,0 +1,104 @@
+// SQL
+// DIM Table Creation
+USE [ Agriculture ]
+GO
+DROP table FACT_TABLE
+DROP table Dim_Crop
+DROP table Dim_Date
+DROP table Dim_Geo
+CREATE TABLE [dbo].[Dim_Crop](
+[Crop_ID] [int] IDENTITY (1,1) NOT NULL PRIMARY KEY ,
+[Crop_Name] [varchar](50) NULL ,
+)
+CREATE TABLE [dbo ].[ Dim _Geo ](
+[Geo_ID] [ numeric ](18, 0) IDENTITY (1,1) NOT NULL PRIMARY KEY ,
+[ Region ] [ varchar ](50) NULL ,
+[ Country ] [ varchar ](50) NULL ,
+[ Country _ Code ] [ varchar ](50) NULL
+)
+CREATE TABLE [dbo ].[ Dim _ Date ](
+[ Date _ID] [ numeric ](18, 0) IDENTITY (1,1) NOT NULL PRIMARY KEY ,
+[ Year ] [ varchar ](50) NULL
+)
+GO
+// DIM Table Insertion
+USE [ Agriculture ]
+GO
+TRUNCATE TABLE [dbo ].[ Dim_ Crop ]
+INSERT INTO [dbo ].[ Dim _ Crop ]
+([ Crop _ Name ])
+SELECT DISTINCT crop _ name
+from RAW _ CROP
+TRUNCATE TABLE [dbo ].[ Dim_Geo]
+INSERT INTO [dbo ].[ Dim _Geo ]
+([ Region ]
+,[ Country ]
+,[ Country _ Code ])
+SELECT DISTINCT Region ,
+Country ,
+Country _ Code
+from [dbo ].[ RAW _ CROP ]
+TRUNCATE TABLE [dbo ].[ Dim_ Date ]
+INSERT INTO [dbo ].[ Dim _ Date ]
+([ Year ])
+SELECT DISTINCT Year
+from [ Agriculture ].[ dbo ].[ RAW _ AGRICULTURE _ LAND ]
+GO
+// Fact Table creation
+USE [ Agriculture ]
+GO
+IF OBJECT _ID('FACT _ TABLE ', 'U') IS NOT NULL
+drop TABLE dbo . FACT _ TABLE ;
+GO
+CREATE TABLE [dbo ].[ FACT _ TABLE ](
+[ Crop _ID] int ,
+[Geo_ID] [ numeric ](18, 0),
+[ Date _ID] [ numeric ](18, 0),
+[ Land use in thousand hectares ] int NULL ,
+[ Production ] int NULL ,
+[ Value _ pesticide ] int NULL ,
+[ Water _ Resource _in_ Percentage ] int NULL
+) ON [ PRIMARY ]
+GO
+ALTER TABLE [ FACT _ TABLE ]
+ADD
+CONSTRAINT fk_ Crop FOREIGN KEY ( Crop _ID) REFERENCES [Dim_ Crop ]( Crop _ID),
+CONSTRAINT fk_ Location FOREIGN KEY (Geo_ID) REFERENCES [Dim_Geo ]( Geo_ID),
+CONSTRAINT fk_ Year FOREIGN KEY ( Date _ID) REFERENCES [Dim_ Date ]( Date _ID)
+go
+GO
+// Fact table Insertion
+INSERT INTO [dbo ].[ FACT _ TABLE ]
+([ Crop _ID]
+,[ Geo_ID]
+,[ Date _ID]
+,[ Land use in thousand hectares ]
+,[ Production ]
+,[ Value _ pesticide ]
+,[ Water _ Resource _in_ Percentage ])
+select distinct
+[ Crop _ID]
+,[ Geo_ID]
+,[ Date _ID]
+,cast (a.[ Agriculture _ Land ] as numeric (18,0)) as
+Agriculture _ Land
+,cast (b.[ Production ] as numeric (18,0))
+as Production
+,CAST (c.[ Value _ pesticide ] as numeric (18,0)) as
+Value _ pesticide
+,[ Water _ Resource _in_ Percentage ]
+from [dbo ].[ RAW _ AGRICULTURE _ LAND ] a
+join [dbo ].[ RAW _ CROP ] b
+on a. Year = b. Year
+join [dbo ]. RAW _ REGIONNEW c
+on b. Year = c. Year and b. Country _ Code = c.
+Country _ Code
+join [dbo ]. Raw _ Rainfall _ Table d
+on b. Region = d. Region
+join [dbo ]. Dim _ Crop e
+on b. crop _ name = e. Crop _ Name
+join [dbo ]. Dim _ Date f
+on a. Year = f. Year
+join [dbo ]. Dim _Geo g
+on b. Country _ Code = g. Country _ Code
+GO
